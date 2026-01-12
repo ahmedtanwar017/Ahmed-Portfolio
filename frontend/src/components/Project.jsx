@@ -1,3 +1,6 @@
+"use client";
+import { motion } from "framer-motion";
+
 export default function Projects() {
   const projects = [
     {
@@ -32,17 +35,18 @@ export default function Projects() {
 
         <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project, index) => (
-            <div
+            <motion.div
               key={index}
-              className="border rounded-xl p-6 hover:shadow-lg transition"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.2 }}
+              whileHover={{ scale: 1.05 }}
+              className="border rounded-xl p-6 shadow-sm hover:shadow-lg transition cursor-pointer"
             >
-              <h3 className="text-xl font-semibold">
-                {project.title}
-              </h3>
+              <h3 className="text-xl font-semibold">{project.title}</h3>
 
-              <p className="mt-3 text-gray-600">
-                {project.description}
-              </p>
+              <p className="mt-3 text-gray-600">{project.description}</p>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {project.tech.map((t) => (
@@ -61,7 +65,7 @@ export default function Projects() {
               >
                 View Project →
               </a>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
