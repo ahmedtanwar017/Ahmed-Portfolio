@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const links = [
@@ -8,26 +8,37 @@ const links = [
   { name: "ABOUT", href: "#about", id: "about" },
   { name: "EXPERIENCE", href: "#experience", id: "experience" },
   { name: "PROJECTS", href: "#projects", id: "projects" },
+];
+
+const mobileLinks = [
+  ...links,
   { name: "CONTACT", href: "#contact", id: "contact" },
 ];
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [active, setActive] = useState("hero");
+  const ticking = useRef(false);
 
-  /* ================= ACTIVE SECTION (SMOOTH + STABLE) ================= */
+  /* ================= ULTRA SMOOTH ACTIVE SECTION ================= */
   const handleScroll = useCallback(() => {
-    const scrollPos = window.scrollY + 140;
-    let current = "hero";
+    if (ticking.current) return;
 
-    for (const link of links) {
-      const section = document.getElementById(link.id);
-      if (section && scrollPos >= section.offsetTop) {
-        current = link.id;
+    ticking.current = true;
+    requestAnimationFrame(() => {
+      const scrollPos = window.scrollY + window.innerHeight / 3;
+      let current = "hero";
+
+      for (const link of mobileLinks) {
+        const section = document.getElementById(link.id);
+        if (section && scrollPos >= section.offsetTop) {
+          current = link.id;
+        }
       }
-    }
 
-    setActive(current);
+      setActive((prev) => (prev === current ? prev : current));
+      ticking.current = false;
+    });
   }, []);
 
   useEffect(() => {
@@ -36,28 +47,26 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  /* ================= LOGO CLICK REFRESH ================= */
-  const handleLogoClick = () => {
-    window.location.href = "/";
-  };
-
   return (
-    <header className="fixed top-0 w-full z-50 bg-[#0a0f1c]/90 backdrop-blur-md border-b border-cyan-500/20">
-      {/* Top Scan Line */}
-      <div className="h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse" />
+    <header className="fixed top-0 w-full z-50 bg-[#060b16]/80 backdrop-blur-xl border-b border-cyan-500/10">
+      {/* HUD Scan Line */}
+      <div className="h-[1px] bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent animate-pulse" />
 
       <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* ================= LOGO ================= */}
         <button
-          onClick={handleLogoClick}
-          className="group flex items-center gap-3 focus:outline-none"
+          onClick={() => (window.location.href = "/")}
+          className="group flex items-center gap-4"
         >
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-40" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-400" />
-          </span>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+            className="relative h-4 w-4 rounded-full border border-cyan-400/40"
+          >
+            <div className="absolute inset-1 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
+          </motion.div>
 
-          <h1 className="font-mono font-bold text-lg tracking-widest text-cyan-300 group-hover:text-cyan-200 transition">
+          <h1 className="font-mono text-lg tracking-[0.2em] text-cyan-300 group-hover:text-cyan-200 transition">
             <span className="text-purple-400">[</span>
             AHMED
             <span className="text-purple-400">]</span>
@@ -66,54 +75,59 @@ export default function Navbar() {
         </button>
 
         {/* ================= DESKTOP MENU ================= */}
-        <ul className="hidden md:flex gap-8 text-xs font-mono tracking-widest">
+        <ul className="hidden md:flex gap-10 text-xs font-mono tracking-widest relative">
           {links.map((link) => (
-            <li key={link.id} className="relative group">
+            <li key={link.id} className="relative">
               <a
                 href={link.href}
-                className={`transition-all duration-300 ${
+                className={`transition-colors ${
                   active === link.id
-                    ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]"
+                    ? "text-cyan-300"
                     : "text-zinc-400 hover:text-cyan-200"
                 }`}
               >
-                <span className="text-purple-400">&lt;</span>
-                {link.name}
-                <span className="text-purple-400">&gt;</span>
+                &lt;{link.name}&gt;
               </a>
 
-              <span
-                className={`absolute -bottom-2 left-0 h-[2px] w-full bg-gradient-to-r from-cyan-400 to-purple-500 transform transition-all duration-300 origin-left ${
-                  active === link.id
-                    ? "scale-x-100 opacity-100"
-                    : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
-                }`}
-              />
+              {active === link.id && (
+                <motion.span
+                  layoutId="nav-glow"
+                  className="absolute -bottom-3 left-0 h-[2px] w-full bg-gradient-to-r from-cyan-400 to-purple-500 shadow-[0_0_10px_rgba(34,211,238,0.7)]"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
             </li>
           ))}
         </ul>
 
+        {/* ================= HIRE ME BUTTON ================= */}
+        <motion.a
+          href="#contact"
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.95 }}
+          className="hidden md:flex items-center gap-2 px-5 py-2 rounded-md
+                     font-mono text-xs tracking-widest
+                     text-cyan-300 border border-cyan-400/40
+                     bg-cyan-400/5 backdrop-blur
+                     shadow-[0_0_15px_rgba(34,211,238,0.25)]
+                     hover:shadow-[0_0_30px_rgba(34,211,238,0.6)]
+                     hover:text-cyan-200 transition-all duration-300"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
+          </span>
+          HIRE ME
+        </motion.a>
+
         {/* ================= MOBILE TOGGLE ================= */}
         <button
           onClick={() => setIsOpen((p) => !p)}
-          className="md:hidden w-10 h-10 border border-cyan-500/30 rounded-md flex flex-col items-center justify-center gap-1.5 transition hover:border-cyan-400"
-          aria-label="Open Menu"
+          className="md:hidden w-10 h-10 border border-cyan-500/30 rounded-md flex flex-col items-center justify-center gap-1.5"
         >
-          <span
-            className={`h-[2px] w-6 bg-cyan-400 transition ${
-              isOpen && "rotate-45 translate-y-2"
-            }`}
-          />
-          <span
-            className={`h-[2px] w-6 bg-cyan-400 transition ${
-              isOpen && "opacity-0"
-            }`}
-          />
-          <span
-            className={`h-[2px] w-6 bg-cyan-400 transition ${
-              isOpen && "-rotate-45 -translate-y-2"
-            }`}
-          />
+          <motion.span animate={isOpen ? { rotate: 45, y: 6 } : {}} className="h-[2px] w-6 bg-cyan-400" />
+          <motion.span animate={isOpen ? { opacity: 0 } : {}} className="h-[2px] w-6 bg-cyan-400" />
+          <motion.span animate={isOpen ? { rotate: -45, y: -6 } : {}} className="h-[2px] w-6 bg-cyan-400" />
         </button>
       </nav>
 
@@ -121,24 +135,23 @@ export default function Navbar() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="md:hidden bg-[#0a0f1c]/95 border-t border-cyan-500/20 overflow-hidden"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="md:hidden bg-[#060b16]/95 backdrop-blur-xl border-t border-cyan-500/10"
           >
-            <ul className="py-6 flex flex-col items-center gap-6 font-mono text-sm tracking-widest">
-              {links.map((link, i) => (
+            <ul className="py-6 flex flex-col items-center gap-6 font-mono">
+              {mobileLinks.map((link, i) => (
                 <motion.li
                   key={link.id}
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
+                  transition={{ delay: i * 0.06 }}
                 >
                   <a
                     href={link.href}
                     onClick={() => setIsOpen(false)}
-                    className={`transition ${
+                    className={`${
                       active === link.id
                         ? "text-cyan-300"
                         : "text-zinc-400 hover:text-cyan-200"
@@ -151,8 +164,8 @@ export default function Navbar() {
               ))}
             </ul>
 
-            <div className="px-6 py-3 border-t border-cyan-500/20 text-xs text-cyan-400/70 font-mono">
-              <span className="text-green-400">$</span> SYSTEM: ONLINE
+            <div className="px-6 py-3 border-t border-cyan-500/10 text-xs font-mono text-cyan-400/70">
+              $ SYSTEM STATUS: <span className="text-green-400">ONLINE</span>
             </div>
           </motion.div>
         )}
