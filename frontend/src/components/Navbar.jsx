@@ -20,7 +20,32 @@ export default function Navbar() {
   const [active, setActive] = useState("hero");
   const ticking = useRef(false);
 
-  /* ================= ULTRA SMOOTH ACTIVE SECTION ================= */
+  // --- REFRESH LOGIC ---
+  // This triggers a full page reload, causing the Loader to show again
+  const handleRefresh = (e) => {
+    e.preventDefault();
+    window.location.reload();
+  };
+
+  // Smooth scroll for internal links
+  const handleScrollTo = (e, id) => {
+    e.preventDefault();
+
+    if (id === "hero") {
+      window.history.pushState(null, "", "#hero");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      const section = document.getElementById(id);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+        window.history.pushState(null, "", `#${id}`);
+      }
+    }
+
+    setActive(id);
+    setIsOpen(false);
+  };
+
   const handleScroll = useCallback(() => {
     if (ticking.current) return;
 
@@ -36,7 +61,7 @@ export default function Navbar() {
         }
       }
 
-      setActive((prev) => (prev === current ? prev : current));
+      setActive(current);
       ticking.current = false;
     });
   }, []);
@@ -48,86 +73,102 @@ export default function Navbar() {
   }, [handleScroll]);
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-[#060b16]/80 backdrop-blur-xl border-b border-cyan-500/10">
-      {/* HUD Scan Line */}
-      <div className="h-[1px] bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent animate-pulse" />
+    <header className="fixed top-0 w-full z-[100]">
+      {/* Background Glass Effect */}
+      <div className="absolute inset-0 bg-[#030014]/80 backdrop-blur-xl border-b border-white/5" />
 
-      <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* ================= LOGO ================= */}
+      {/* Top Accent Glow Line */}
+      <div className="relative h-[1px] w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50 shadow-[0_0_15px_rgba(34,211,238,0.8)]" />
+
+      <nav className="relative max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        {/* ================= LOGO (REFRESH BUTTON) ================= */}
         <button
-          onClick={() => (window.location.href = "/")}
-          className="group flex items-center gap-4"
+          onClick={handleRefresh}
+          className="group flex items-center gap-3 outline-none cursor-pointer"
+          title="Refresh Page"
         >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-            className="relative h-4 w-4 rounded-full border border-cyan-400/40"
-          >
-            <div className="absolute inset-1 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
-          </motion.div>
-
-          <h1 className="font-mono text-lg tracking-[0.2em] text-cyan-300 group-hover:text-cyan-200 transition">
-            <span className="text-purple-400">[</span>
-            AHMED
-            <span className="text-purple-400">]</span>
-            <span className="text-green-400 ml-1 animate-pulse">_</span>
-          </h1>
+          <div className="relative h-10 w-10 flex items-center justify-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 rounded-xl border border-cyan-500/30 group-hover:border-cyan-400 transition-colors"
+            />
+            <span className="text-xl font-black text-white group-hover:text-cyan-400 transition-colors">
+              A
+            </span>
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="font-bold text-sm tracking-[0.3em] text-white group-hover:text-cyan-400 transition-colors">
+              AHMED
+            </span>
+            <span className="text-[10px] font-mono text-cyan-500 leading-none tracking-widest">
+              TANWAR
+            </span>
+          </div>
         </button>
 
         {/* ================= DESKTOP MENU ================= */}
-        <ul className="hidden md:flex gap-10 text-xs font-mono tracking-widest relative">
-          {links.map((link) => (
-            <li key={link.id} className="relative">
-              <a
-                href={link.href}
-                className={`transition-colors ${
-                  active === link.id
-                    ? "text-cyan-300"
-                    : "text-zinc-400 hover:text-cyan-200"
-                }`}
-              >
-                &lt;{link.name}&gt;
-              </a>
+        <div className="hidden md:flex items-center bg-white/5 border border-white/10 px-2 py-1.5 rounded-2xl backdrop-blur-md">
+          <ul className="flex gap-1 text-[11px] font-bold tracking-widest">
+            {links.map((link) => (
+              <li key={link.id} className="relative">
+                <a
+                  href={link.href}
+                  onClick={(e) => handleScrollTo(e, link.id)}
+                  className={`relative z-10 px-6 py-2 rounded-xl transition-all duration-300 block ${
+                    active === link.id
+                      ? "text-white"
+                      : "text-zinc-500 hover:text-cyan-300"
+                  }`}
+                >
+                  {link.name}
+                </a>
 
-              {active === link.id && (
-                <motion.span
-                  layoutId="nav-glow"
-                  className="absolute -bottom-3 left-0 h-[2px] w-full bg-gradient-to-r from-cyan-400 to-purple-500 shadow-[0_0_10px_rgba(34,211,238,0.7)]"
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                />
-              )}
-            </li>
-          ))}
-        </ul>
+                {active === link.id && (
+                  <motion.div
+                    layoutId="nav-pill"
+                    className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-violet-500/20 border border-cyan-500/40 rounded-xl z-0"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        {/* ================= HIRE ME BUTTON ================= */}
+        {/* ================= ACTION BUTTON ================= */}
         <motion.a
           href="#contact"
-          whileHover={{ scale: 1.06 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="hidden md:flex items-center gap-2 px-5 py-2 rounded-md
-                     font-mono text-xs tracking-widest
-                     text-cyan-300 border border-cyan-400/40
-                     bg-cyan-400/5 backdrop-blur
-                     shadow-[0_0_15px_rgba(34,211,238,0.25)]
-                     hover:shadow-[0_0_30px_rgba(34,211,238,0.6)]
-                     hover:text-cyan-200 transition-all duration-300"
+          className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl
+                     bg-gradient-to-r from-cyan-500 to-violet-600
+                     text-white font-bold text-[11px] tracking-widest
+                     shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)]
+                     transition-all duration-300"
         >
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
-          </span>
-          HIRE ME
+          CONNECT
         </motion.a>
 
         {/* ================= MOBILE TOGGLE ================= */}
         <button
           onClick={() => setIsOpen((p) => !p)}
-          className="md:hidden w-10 h-10 border border-cyan-500/30 rounded-md flex flex-col items-center justify-center gap-1.5"
+          className="md:hidden p-2 text-white outline-none"
         >
-          <motion.span animate={isOpen ? { rotate: 45, y: 6 } : {}} className="h-[2px] w-6 bg-cyan-400" />
-          <motion.span animate={isOpen ? { opacity: 0 } : {}} className="h-[2px] w-6 bg-cyan-400" />
-          <motion.span animate={isOpen ? { rotate: -45, y: -6 } : {}} className="h-[2px] w-6 bg-cyan-400" />
+          <div className="w-6 h-5 flex flex-col justify-between">
+            <motion.span
+              animate={isOpen ? { rotate: 45, y: 9 } : {}}
+              className="w-full h-[2px] bg-cyan-400 block origin-center"
+            />
+            <motion.span
+              animate={isOpen ? { opacity: 0 } : {}}
+              className="w-full h-[2px] bg-white block"
+            />
+            <motion.span
+              animate={isOpen ? { rotate: -45, y: -9 } : {}}
+              className="w-full h-[2px] bg-cyan-400 block origin-center"
+            />
+          </div>
         </button>
       </nav>
 
@@ -135,38 +176,29 @@ export default function Navbar() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="md:hidden bg-[#060b16]/95 backdrop-blur-xl border-t border-cyan-500/10"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden overflow-hidden bg-[#030014]/95 backdrop-blur-2xl border-b border-white/10"
           >
-            <ul className="py-6 flex flex-col items-center gap-6 font-mono">
+            <ul className="flex flex-col p-8 gap-8 items-center font-bold tracking-[0.3em] text-xs">
               {mobileLinks.map((link, i) => (
                 <motion.li
                   key={link.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
                 >
                   <a
                     href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`${
-                      active === link.id
-                        ? "text-cyan-300"
-                        : "text-zinc-400 hover:text-cyan-200"
-                    }`}
+                    onClick={(e) => handleScrollTo(e, link.id)}
+                    className={`${active === link.id ? "text-cyan-400" : "text-white"}`}
                   >
-                    <span className="text-green-400 mr-2">$</span>
                     {link.name}
                   </a>
                 </motion.li>
               ))}
             </ul>
-
-            <div className="px-6 py-3 border-t border-cyan-500/10 text-xs font-mono text-cyan-400/70">
-              $ SYSTEM STATUS: <span className="text-green-400">ONLINE</span>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

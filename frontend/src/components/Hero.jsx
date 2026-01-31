@@ -1,177 +1,130 @@
 "use client";
 
+import React, { useRef, useMemo, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Points, PointMaterial, Preload } from "@react-three/drei";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { Points, PointMaterial, Preload } from "@react-three/drei";
 import * as THREE from "three";
-import { useRef, useMemo, Suspense } from "react";
 
-function InteractivePoints() {
-  const pointsRef = useRef();
+// --- 3D ANIMATION LOGIC ---
+
+function AnimatedBackground() {
+  const ref = useRef();
   
-  // Memoize positions so they aren't recalculated on re-renders
-  const particlePositions = useMemo(() => {
-    const count = 1000; // Increased density for a "smoother" look
+  const sphere = useMemo(() => {
+    const count = 2000; // Increased count for more "sparkle"
     const positions = new Float32Array(count * 3);
-    for (let i = 0; i < count * 3; i++) {
-      positions[i] = (Math.random() - 0.5) * 40;
+    for (let i = 0; i < count; i++) {
+      const r = 15;
+      const theta = 2 * Math.PI * Math.random();
+      const phi = Math.acos(2 * Math.random() - 1);
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i * 3 + 2] = r * Math.cos(phi);
     }
     return positions;
   }, []);
 
-  useFrame((state) => {
-    if (!pointsRef.current) return;
-    const t = state.clock.getElapsedTime();
-    // Use low-frequency math for "buttery" movement
-    pointsRef.current.rotation.x = Math.sin(t / 12) * 0.08;
-    pointsRef.current.rotation.y = Math.cos(t / 18) * 0.08;
+  useFrame((state, delta) => {
+    if (ref.current) {
+      ref.current.rotation.x -= delta / 12;
+      ref.current.rotation.y -= delta / 15;
+    }
   });
 
   return (
-    <Points ref={pointsRef} positions={particlePositions} stride={3} frustumCulled>
-      <PointMaterial
-        transparent
-        color="#00f6ff"
-        size={0.15}
-        sizeAttenuation={true}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        opacity={0.4}
-      />
-    </Points>
+    <group rotation={[0, 0, Math.PI / 4]}>
+      <Points ref={ref} positions={sphere} stride={3} frustumCulled>
+        <PointMaterial
+          transparent
+          color="#22d3ee" // Electric Cyan
+          size={0.07}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </Points>
+    </group>
   );
 }
 
+// --- UI COMPONENTS ---
+
+const StatusBadge = () => (
+  <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 rounded-full backdrop-blur-xl mb-8">
+    <span className="relative flex h-2 w-2">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+    </span>
+    <span className="text-[10px] font-black tracking-[0.25em] text-cyan-200 uppercase">
+      Available for new projects
+    </span>
+  </div>
+);
+
 export default function Hero() {
-  const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"]
-  });
-
-  // Smooth out the scroll progress to prevent "jittery" parallax
-  const smoothYProgress = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
-
-  const y = useTransform(smoothYProgress, [0, 1], [0, -150]);
-  const opacity = useTransform(smoothYProgress, [0, 0.5], [1, 0]);
-
   return (
-    <section
-      ref={containerRef}
-      id="hero"
-      className="relative min-h-screen w-full flex flex-col items-center justify-center bg-[#020617] overflow-hidden px-6"
-    >
-      {/* 1. BACKGROUND GRID - Simplified for performance */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div 
-          className="absolute inset-0 opacity-[0.1]" 
-          style={{ 
-            backgroundImage: `linear-gradient(#00f6ff 1px, transparent 1px), linear-gradient(90deg, #00f6ff 1px, transparent 1px)`, 
-            backgroundSize: '80px 80px',
-            maskImage: 'radial-gradient(circle at center, black, transparent 80%)'
-          }} 
-        />
-      </div>
+    <section className="relative min-h-screen w-full bg-[#030014] flex flex-col items-center justify-center overflow-hidden">
+      
+      {/* 1. ATMOSPHERIC LIGHTING (The "Attractive" Glow) */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/30 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
 
-      {/* 2. 3D CANVAS - Optimized DPR and alpha */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-        <Canvas 
-          camera={{ position: [0, 0, 20], fov: 50 }}
-          dpr={[1, 2]} // Performance cap for 4k monitors
-          gl={{ antialias: true, alpha: true }}
-        >
+      {/* 2. BACKGROUND CANVAS */}
+      <div className="absolute inset-0 z-0">
+        <Canvas camera={{ position: [0, 0, 5] }} dpr={[1, 2]}>
           <Suspense fallback={null}>
-            <InteractivePoints />
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              autoRotate
-              autoRotateSpeed={0.5}
-            />
+            <AnimatedBackground />
             <Preload all />
           </Suspense>
         </Canvas>
       </div>
 
-      {/* 3. MAIN CONTENT - Added will-change and smooth y */}
-      <motion.div
-        style={{ y, opacity, willChange: "transform, opacity" }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-30 max-w-5xl text-center"
-      >
-        <motion.div
-          initial={{ letterSpacing: "0.2em", opacity: 0 }}
-          animate={{ letterSpacing: "0.4em", opacity: 1 }}
-          transition={{ duration: 1.5, delay: 0.2 }}
-          className="text-cyan-400 text-xs md:text-sm font-bold uppercase mb-6"
-        >
-          — Software Architect —
-        </motion.div>
+      {/* 3. ARCHITECTURAL OVERLAY (Neon Grid) */}
+      <div 
+        className="absolute inset-0 z-10 pointer-events-none opacity-[0.2]"
+        style={{
+          backgroundImage: `linear-gradient(#22d3ee 0.5px, transparent 0.5px), linear-gradient(90deg, #22d3ee 0.5px, transparent 0.5px)`,
+          backgroundSize: '100px 100px',
+          maskImage: 'radial-gradient(circle at center, black, transparent 90%)'
+        }}
+      />
 
-        <h1 className="text-7xl md:text-[10rem] font-black text-white tracking-tighter leading-[0.85] mb-8 select-none">
-          AHMED <br />
-          <span className="relative inline-block">
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-600">
-              TANWAR
-            </span>
-            <div className="absolute -inset-x-20 top-1/2 -translate-y-1/2 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+      {/* 4. HERO CONTENT */}
+      <div className="relative z-20 container mx-auto px-6 text-center">
+        <StatusBadge />
+        
+        <h1 className="text-6xl md:text-9xl font-black text-white mb-6 tracking-tighter leading-none">
+          Ahmed <br className="md:hidden" />
+          <span className="bg-gradient-to-r from-cyan-400 via-violet-400 to-fuchsia-500 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(34,211,238,0.5)]">
+             Tanwar
           </span>
         </h1>
 
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-lg md:text-xl text-zinc-400 font-light max-w-xl mx-auto leading-relaxed"
-        >
-          Engineering <span className="text-white">high-performance</span> digital systems 
-          with precision architecture and fluid user experiences.
-        </motion.p>
+        <p className="max-w-xl mx-auto text-slate-300 text-lg md:text-xl leading-relaxed mb-10 font-medium">
+          "Building digital interfaces that bridge the gap between <span className="text-cyan-400 font-bold">imagination</span> and <span className="text-violet-400 font-bold">reality</span>."
+        </p>
 
-        {/* BUTTON GROUP */}
-        <div className="mt-12 flex flex-col sm:flex-row justify-center items-center gap-6">
-          <motion.a
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            href="#contact"
-            className="group relative px-12 py-4 bg-cyan-500 text-[#020617] font-bold uppercase text-[10px] tracking-[0.2em] rounded-full overflow-hidden transition-shadow hover:shadow-[0_0_40px_rgba(6,182,212,0.3)]"
-          >
-            <span className="relative z-10">Initialize Project</span>
-          </motion.a>
-
-          <motion.a
-            whileHover={{ scale: 1.02, color: "#fff" }}
-            whileTap={{ scale: 0.98 }}
-            href="/resume.pdf"
-            className="px-12 py-4 border border-zinc-800 text-zinc-400 font-bold uppercase text-[10px] tracking-[0.2em] rounded-full transition-colors hover:bg-white/5"
-          >
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+          <button className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-bold rounded-2xl hover:scale-105 transition-all duration-300 shadow-[0_0_30px_rgba(34,211,238,0.4)]">
+            Let's Talk
+          </button>
+          
+          <button className="w-full sm:w-auto px-10 py-4 bg-white/5 text-white font-bold border border-white/10 rounded-2xl backdrop-blur-md hover:bg-white/10 transition-all">
             Download CV
-          </motion.a>
+          </button>
         </div>
-      </motion.div>
+      </div>
 
-      {/* 4. HUD / METRICS - Stabilized animations */}
-      <div className="absolute bottom-10 inset-x-10 flex justify-between items-end z-20 pointer-events-none select-none">
-        <div className="hidden md:flex flex-col gap-3">
-          <div className="w-24 h-[1px] bg-gradient-to-r from-cyan-500/50 to-transparent" />
-          <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest">Build_v2.0.4 // 2024</span>
-        </div>
-        
-        <motion.div 
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="flex items-center gap-3 bg-zinc-900/50 px-4 py-2 rounded-full border border-zinc-800/50 backdrop-blur-sm"
-        >
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]" />
-          <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-[0.2em]">Systems_Nominal</span>
-        </motion.div>
-    </div>
+      {/* 5. DESIGN ACCENT: Side markers */}
+      <div className="absolute left-10 bottom-10 hidden xl:flex items-center gap-4 rotate-[-90deg] origin-left">
+        <span className="text-[10px] font-mono text-cyan-500/50 tracking-[0.5em] uppercase">Portfolio v2.0</span>
+        <div className="h-[1px] w-20 bg-gradient-to-r from-cyan-500/50 to-transparent" />
+      </div>
+
+      {/* Scroll Indicator */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-30">
+        <div className="w-[1px] h-12 bg-gradient-to-b from-cyan-500 to-transparent" />
+      </div>
     </section>
   );
 }
