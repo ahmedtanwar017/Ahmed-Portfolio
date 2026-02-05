@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 const links = [
   { name: "HOME", href: "#hero", id: "hero" },
@@ -56,8 +57,13 @@ export default function Navbar() {
 
       for (const link of mobileLinks) {
         const section = document.getElementById(link.id);
-        if (section && scrollPos >= section.offsetTop) {
-          current = link.id;
+        if (section) {
+          const top = section.offsetTop;
+          const height = section.offsetHeight;
+
+          if (scrollPos >= top && scrollPos < top + height) {
+            current = link.id;
+          }
         }
       }
 
@@ -137,18 +143,19 @@ export default function Navbar() {
         </div>
 
         {/* ================= ACTION BUTTON ================= */}
-        <motion.a
-          href="#contact"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl
-                     bg-gradient-to-r from-cyan-500 to-violet-600
-                     text-white font-bold text-[11px] tracking-widest
-                     shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)]
-                     transition-all duration-300"
-        >
-          CONNECT
-        </motion.a>
+        <Link href="/hire-me">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl
+               bg-gradient-to-r from-cyan-500 to-violet-600
+               text-white font-bold text-[11px] tracking-widest
+               shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)]
+               transition-all duration-300 cursor-pointer"
+          >
+            CONNECT
+          </motion.div>
+        </Link>
 
         {/* ================= MOBILE TOGGLE ================= */}
         <button

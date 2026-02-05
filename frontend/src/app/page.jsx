@@ -7,6 +7,9 @@ import Loader from "@/components/Loader";
 import About from "@/components/About";
 import SocialSidebar from "@/components/SocialSidebar";
 import Experience from "@/components/Experience";
+import Projects from "@/components/Project";
+import Footer from "@/components/Footer";
+import Contact from "@/components/Contact";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -28,10 +31,9 @@ export default function Home() {
             <About />
             <SocialSidebar />
             <Experience />
-            {/* Add your other sections here with matching IDs */}
-            <section id="about" className="h-screen flex items-center justify-center text-white">About Section</section>
-            <section id="experience" className="h-screen flex items-center justify-center text-white">Experience Section</section>
-            <section id="projects" className="h-screen flex items-center justify-center text-white">Projects Section</section>
+            <Projects />
+            <Footer />
+            <Contact />
           </motion.div>
         )}
       </AnimatePresence>
