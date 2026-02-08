@@ -9,7 +9,7 @@ import SocialSidebar from "@/components/SocialSidebar";
 import Experience from "@/components/Experience";
 import Projects from "@/components/Project";
 import Footer from "@/components/Footer";
-import Contact from "@/components/Contact";
+
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +33,7 @@ export default function Home() {
             <Experience />
             <Projects />
             <Footer />
-            <Contact />
+            
           </motion.div>
         )}
       </AnimatePresence>

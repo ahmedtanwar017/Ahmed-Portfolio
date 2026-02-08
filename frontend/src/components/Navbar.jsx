@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 
 const links = [
   { name: "HOME", href: "#hero", id: "hero" },
@@ -21,17 +22,39 @@ export default function Navbar() {
   const [active, setActive] = useState("hero");
   const ticking = useRef(false);
 
+  const router = useRouter();
+  const pathname = usePathname();
+
   // --- REFRESH LOGIC ---
-  // This triggers a full page reload, causing the Loader to show again
   const handleRefresh = (e) => {
     e.preventDefault();
-    window.location.reload();
+    window.location.href = "/";
   };
 
-  // Smooth scroll for internal links
+  // FIXED SCROLL + ROUTING LOGIC
   const handleScrollTo = (e, id) => {
     e.preventDefault();
 
+    // If NOT on homepage, first navigate to home
+    if (pathname !== "/") {
+      router.push("/");
+
+      setTimeout(() => {
+        const section = document.getElementById(id);
+
+        if (section) {
+          section.scrollIntoView({ behavior: "smooth" });
+        } else if (id === "hero") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }, 120);
+
+      setActive(id);
+      setIsOpen(false);
+      return;
+    }
+
+    // Normal scroll when already on homepage
     if (id === "hero") {
       window.history.pushState(null, "", "#hero");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -80,18 +103,15 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 w-full z-[100]">
-      {/* Background Glass Effect */}
       <div className="absolute inset-0 bg-[#030014]/80 backdrop-blur-xl border-b border-white/5" />
 
-      {/* Top Accent Glow Line */}
       <div className="relative h-[1px] w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50 shadow-[0_0_15px_rgba(34,211,238,0.8)]" />
 
       <nav className="relative max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        {/* ================= LOGO (REFRESH BUTTON) ================= */}
+        {/* LOGO - GOES TO HOME CLEANLY */}
         <button
           onClick={handleRefresh}
           className="group flex items-center gap-3 outline-none cursor-pointer"
-          title="Refresh Page"
         >
           <div className="relative h-10 w-10 flex items-center justify-center">
             <motion.div
@@ -113,7 +133,7 @@ export default function Navbar() {
           </div>
         </button>
 
-        {/* ================= DESKTOP MENU ================= */}
+        {/* DESKTOP MENU */}
         <div className="hidden md:flex items-center bg-white/5 border border-white/10 px-2 py-1.5 rounded-2xl backdrop-blur-md">
           <ul className="flex gap-1 text-[11px] font-bold tracking-widest">
             {links.map((link) => (
@@ -142,8 +162,8 @@ export default function Navbar() {
           </ul>
         </div>
 
-        {/* ================= ACTION BUTTON ================= */}
-        <Link href="/hire-me">
+        {/* CONNECT BUTTON - FIXED ROUTING */}
+        <Link href="/connect" scroll={true}>
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -157,7 +177,7 @@ export default function Navbar() {
           </motion.div>
         </Link>
 
-        {/* ================= MOBILE TOGGLE ================= */}
+        {/* MOBILE TOGGLE */}
         <button
           onClick={() => setIsOpen((p) => !p)}
           className="md:hidden p-2 text-white outline-none"
@@ -179,7 +199,7 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* ================= MOBILE MENU ================= */}
+      {/* MOBILE MENU */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -199,7 +219,9 @@ export default function Navbar() {
                   <a
                     href={link.href}
                     onClick={(e) => handleScrollTo(e, link.id)}
-                    className={`${active === link.id ? "text-cyan-400" : "text-white"}`}
+                    className={`${
+                      active === link.id ? "text-cyan-400" : "text-white"
+                    }`}
                   >
                     {link.name}
                   </a>
